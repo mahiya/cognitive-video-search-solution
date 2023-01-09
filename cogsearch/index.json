@@ -1,0 +1,138 @@
+{
+    "fields": [
+        {
+            "name": "id",
+            "type": "Edm.String",
+            "searchable": false,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false,
+            "key": true
+        },
+        {
+            "name": "account",
+            "type": "Edm.String",
+            "searchable": false,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false
+        },
+        {
+            "name": "container",
+            "type": "Edm.String",
+            "searchable": false,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false
+        },
+        {
+            "name": "blob",
+            "type": "Edm.String",
+            "searchable": true,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false,
+            "analyzer": "keyword"
+        },
+        {
+            "name": "videoId",
+            "type": "Edm.String",
+            "searchable": false,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false
+        },
+        {
+            "name": "index",
+            "type": "Edm.Int32",
+            "searchable": false,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false
+        },
+        {
+            "name": "phrase",
+            "type": "Edm.String",
+            "searchable": true,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false,
+            "analyzer": "customanalyzer",
+            "synonymMaps": []
+        },
+        {
+            "name": "offset",
+            "type": "Edm.Int32",
+            "searchable": false,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false
+        }
+    ],
+    "scoringProfiles": [],
+    "corsOptions": {
+        "allowedOrigins": [
+            "*"
+        ],
+        "maxAgeInSeconds": null
+    },
+    "suggesters": [],
+    "analyzers": [
+        {
+            "name": "customanalyzer",
+            "@odata.type": "#Microsoft.Azure.Search.CustomAnalyzer",
+            "charFilters": [
+                "html_strip"
+            ],
+            "tokenizer": "customtokenizer",
+            "tokenFilters": [
+                "trim",
+                "customlength",
+                "customshingle",
+                "customsstopwords"
+            ]
+        }
+    ],
+    "charFilters": [],
+    "tokenizers": [
+        {
+            "name": "customtokenizer",
+            "@odata.type": "#Microsoft.Azure.Search.MicrosoftLanguageTokenizer",
+            "maxTokenLength": 255,
+            "isSearchTokenizer": true,
+            "language": "japanese"
+        }
+    ],
+    "tokenFilters": [
+        {
+            "name": "customlength",
+            "@odata.type": "#Microsoft.Azure.Search.LengthTokenFilter",
+            "min": 2,
+            "max": 100
+        },
+        {
+            "name": "customshingle",
+            "@odata.type": "#Microsoft.Azure.Search.ShingleTokenFilter",
+            "minShingleSize": 2,
+            "maxShingleSize": 3
+        },
+        {
+            "name": "customsstopwords",
+            "@odata.type": "#Microsoft.Azure.Search.StopwordsTokenFilter",
+            "stopwords": [
+                "ます",
+                "です",
+                "ただし",
+                "べき",
+                "ため",
+                "する",
+                "いう"
+            ]
+        }
+    ],
+    "similarity": {
+        "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
+        "k1": null,
+        "b": null
+    }
+}
