@@ -1,3 +1,7 @@
+//////////////////////////////////////////////////////////////////////
+//// Parameters
+//////////////////////////////////////////////////////////////////////
+
 param location string = resourceGroup().location
 param storageAccountName string
 param blobContainerName string
@@ -8,35 +12,20 @@ param systemTopicName string = 'evgt-${resourceNamePostfix}'
 param eventSubscriptionName string = 'evgs-${resourceNamePostfix}'
 param subjectEndsWith string = '.mp4'
 
-// EventGrid: Topic
-resource systemTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
-  name: systemTopicName
-  location: location
-  properties: {
-    source: resourceId('Microsoft.Storage/storageAccounts', storageAccountName)
-    topicType: 'Microsoft.Storage.StorageAccounts'
-  }
-}
+//////////////////////////////////////////////////////////////////////
+//// Modules
+//////////////////////////////////////////////////////////////////////
 
-// EventGrid: Subscription
-resource eventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = {
-  parent: systemTopic
-  name: eventSubscriptionName
-  properties: {
-    destination: {
-      endpointType: 'AzureFunction'
-      properties: {
-        maxEventsPerBatch: 1
-        preferredBatchSizeInKilobytes: 64
-        resourceId: resourceId('Microsoft.Web/sites/functions', functionAppName, functionName)
-      }
-    }
-    filter: {
-      includedEventTypes: [
-        'Microsoft.Storage.BlobCreated'
-      ]
-      subjectBeginsWith: '/blobServices/default/containers/${blobContainerName}'
-      subjectEndsWith: subjectEndsWith
-    }
+module eventGrid 'modules/event-grid.bicep' = {
+  name: 'eventGrid'
+  params: {
+    storageAccountName: storageAccountName
+    blobContainerName: blobContainerName
+    functionAppName: functionAppName
+    functionName: functionName
+    location: location
+    systemTopicName: systemTopicName
+    eventSubscriptionName: eventSubscriptionName
+    subjectEndsWith: subjectEndsWith
   }
 }

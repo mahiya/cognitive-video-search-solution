@@ -35,6 +35,3 @@
 - Azure Key Vault
 - Azure Application Insights
 - Azure Active Directory
-
-## 注意点
-- 時々、Azure リソースデプロイ時(deploy.sh実行時)の Azure Video Indexer 作成時に、同じくデプロイ時に作成する Azure Media Service へのアクセス権限がないためにデプロイに失敗することがあります。恐らくですが、Azure Video Indexer に使用するユーザ管理マネージドIDに付与した Azure Media Service への Controbutor 権限の反映が、Azure Video Indexer 作成までに間に合っていないためだと思われます(プラットフォーム側の原因？)。失敗した場合は、deploy.sh を再度実行すれば、デプロイが問題なく完了されます。
