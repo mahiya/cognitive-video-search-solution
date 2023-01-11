@@ -71,7 +71,7 @@ echo "{
     \"highlight\": \"phrase\",
     \"highlightPreTag\": \"<span class='bg-warning'>\",
     \"highlightPostTag\": \"</span>\"
-}" > htmls/cogsearch_settings.json
+}" > app/src/assets/cogsearch_settings.json
 
 # Static Web Apps で使用する AAD アプリを登録する
 aadClientId=`az ad app create \
@@ -96,12 +96,18 @@ az staticwebapp appsettings set \
     --setting-names AZURE_CLIENT_ID=$aadClientId \
                     AZURE_CLIENT_SECRET=$aadClientSecret
 
+# Vue アプリをビルドする
+pushd app
+npm install
+npm run build
+popd
+
 # テンプレートから "staticwebapp.config.json" ファイルを作成する
-sed -e "s/{{AZURE_TENANT_ID}}/$tenantId/g" "htmls/staticwebapp.config_template.json" > htmls/staticwebapp.config.json
+sed -e "s/{{AZURE_TENANT_ID}}/$tenantId/g" "app/staticwebapp.config_template.json" > app/dist/staticwebapp.config.json
 
 # HTML アプリを Static Apps へデプロイする
 swa deploy \
-    --app-location './htmls' \
+    --app-location 'app/dist' \
     --tenant-id $tenantId \
     --resource-group $resourceGroupName \
     --app-name $staticWebAppName \
