@@ -4,11 +4,10 @@ using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using VideoSearchSolution.Common;
 
-[assembly: FunctionsStartup(typeof(VideoSearchSolution.WebApi.Startup))]
+[assembly: FunctionsStartup(typeof(VideoSearchSolution.Startup))]
 
-namespace VideoSearchSolution.WebApi
+namespace VideoSearchSolution
 {
     class Startup : FunctionsStartup
     {
@@ -29,6 +28,7 @@ namespace VideoSearchSolution.WebApi
             var options = new DefaultAzureCredentialOptions();
             if (!string.IsNullOrEmpty(configuration.ManagedIdentityClientId))
                 options.ManagedIdentityClientId = configuration.ManagedIdentityClientId;
+            options.VisualStudioTenantId = "99fa25af-3b37-421e-8d50-feb3961d2dd6";
             var credential = new DefaultAzureCredential(options);
 
             // BlobSasGenerator

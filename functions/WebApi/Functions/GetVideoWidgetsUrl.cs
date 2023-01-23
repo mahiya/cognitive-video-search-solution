@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using System.Threading.Tasks;
-using VideoSearchSolution.Common;
 
-namespace VideoSearchSolution.WebApi
+namespace VideoSearchSolution
 {
     /// <summary>
     /// Azure Video Indexer ビデオファイルにアクセスするためのトークンを発行する Web API

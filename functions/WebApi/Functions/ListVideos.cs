@@ -4,9 +4,8 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using System.Linq;
 using System.Threading.Tasks;
-using VideoSearchSolution.Common;
 
-namespace VideoSearchSolution.WebApi
+namespace VideoSearchSolution
 {
     class ListVideos
     {

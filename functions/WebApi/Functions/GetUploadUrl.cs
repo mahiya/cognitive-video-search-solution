@@ -5,9 +5,8 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using System;
 using System.Threading.Tasks;
-using VideoSearchSolution.Common;
 
-namespace VideoSearchSolution.WebApi
+namespace VideoSearchSolution
 {
     /// <summary>
     /// ビデオファイルを Azure Storage Blob にアップロードするための URL を発行する Web API

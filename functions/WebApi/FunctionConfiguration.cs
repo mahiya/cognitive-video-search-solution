@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace VideoSearchSolution.WebApi
+namespace VideoSearchSolution
 {
     public class FunctionConfiguration
     {
