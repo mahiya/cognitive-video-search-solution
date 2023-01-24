@@ -1,0 +1,70 @@
+{
+    "skills": [
+        {
+            "@odata.type": "#Microsoft.Skills.Text.KeyPhraseExtractionSkill",
+            "defaultLanguageCode": "ja",
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/phrase"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "keyPhrases",
+                    "targetName": "keyphrases"
+                }
+            ]
+        },
+        {
+            "@odata.type": "#Microsoft.Skills.Text.V3.EntityRecognitionSkill",
+            "defaultLanguageCode": "ja",
+            "categories": [
+                "Product",
+                "Person",
+                "Organization",
+                "Event",
+                "Skill",
+                "Location",
+                "PersonType"
+            ],
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/phrase"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "namedEntities",
+                    "targetName": "namedEntities"
+                }
+            ]
+        },
+        {
+            "@odata.type": "#Microsoft.Skills.Text.V3.SentimentSkill",
+            "defaultLanguageCode": "ja",
+            "includeOpinionMining": true,
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/phrase"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "sentiment",
+                    "targetName": "sentiment"
+                },
+                {
+                    "name": "confidenceScores",
+                    "targetName": "confidenceScores"
+                }
+            ]
+        }
+    ],
+    "cognitiveServices": {
+        "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+        "key": "{{COGNITIVE_SERVICE_KEY}}"
+    }
+}

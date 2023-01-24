@@ -10,28 +10,12 @@
             "key": true
         },
         {
-            "name": "account",
-            "type": "Edm.String",
-            "searchable": false,
-            "filterable": false,
-            "sortable": false,
-            "facetable": false
-        },
-        {
-            "name": "container",
-            "type": "Edm.String",
-            "searchable": false,
-            "filterable": false,
-            "sortable": false,
-            "facetable": false
-        },
-        {
             "name": "blob",
             "type": "Edm.String",
             "searchable": true,
-            "filterable": false,
+            "filterable": true,
             "sortable": false,
-            "facetable": false,
+            "facetable": true,
             "analyzer": "keyword"
         },
         {
@@ -57,8 +41,7 @@
             "filterable": false,
             "sortable": false,
             "facetable": false,
-            "analyzer": "customanalyzer",
-            "synonymMaps": []
+            "analyzer": "ja.microsoft"
         },
         {
             "name": "offset",
@@ -67,6 +50,83 @@
             "filterable": false,
             "sortable": false,
             "facetable": false
+        },
+        {
+            "name": "keyPhrases",
+            "type": "Collection(Edm.String)",
+            "searchable": true,
+            "filterable": false,
+            "sortable": false,
+            "facetable": false,
+            "analyzer": "ja.microsoft"
+        },
+        {
+            "name": "entities",
+            "type": "Collection(Edm.ComplexType)",
+            "fields": [
+                {
+                    "name": "text",
+                    "type": "Edm.String",
+                    "searchable": false,
+                    "filterable": false,
+                    "sortable": false,
+                    "facetable": false
+                },
+                {
+                    "name": "category",
+                    "type": "Edm.String",
+                    "searchable": false,
+                    "filterable": false,
+                    "sortable": false,
+                    "facetable": false
+                },
+                {
+                    "name": "confidenceScore",
+                    "type": "Edm.Double",
+                    "searchable": false,
+                    "filterable": false,
+                    "sortable": false,
+                    "facetable": false
+                }
+            ]
+        },
+        {
+            "name": "sentiment",
+            "type": "Edm.String",
+            "searchable": false,
+            "filterable": true,
+            "sortable": false,
+            "facetable": true
+        },
+        {
+            "name": "sentimentScores",
+            "type": "Edm.ComplexType",
+            "fields": [
+                {
+                    "name": "positive",
+                    "type": "Edm.Double",
+                    "searchable": false,
+                    "filterable": false,
+                    "sortable": false,
+                    "facetable": false
+                },
+                {
+                    "name": "neutral",
+                    "type": "Edm.Double",
+                    "searchable": false,
+                    "filterable": false,
+                    "sortable": false,
+                    "facetable": false
+                },
+                {
+                    "name": "negative",
+                    "type": "Edm.Double",
+                    "searchable": false,
+                    "filterable": false,
+                    "sortable": false,
+                    "facetable": false
+                }
+            ]
         }
     ],
     "scoringProfiles": [],
@@ -76,63 +136,18 @@
         ],
         "maxAgeInSeconds": null
     },
-    "suggesters": [],
-    "analyzers": [
+    "suggesters": [
         {
-            "name": "customanalyzer",
-            "@odata.type": "#Microsoft.Azure.Search.CustomAnalyzer",
-            "charFilters": [
-                "html_strip"
-            ],
-            "tokenizer": "customtokenizer",
-            "tokenFilters": [
-                "trim",
-                "customlength",
-                "customshingle",
-                "customsstopwords"
-            ]
-        }
-    ],
-    "charFilters": [],
-    "tokenizers": [
-        {
-            "name": "customtokenizer",
-            "@odata.type": "#Microsoft.Azure.Search.MicrosoftLanguageTokenizer",
-            "maxTokenLength": 255,
-            "isSearchTokenizer": true,
-            "language": "japanese"
-        }
-    ],
-    "tokenFilters": [
-        {
-            "name": "customlength",
-            "@odata.type": "#Microsoft.Azure.Search.LengthTokenFilter",
-            "min": 2,
-            "max": 100
-        },
-        {
-            "name": "customshingle",
-            "@odata.type": "#Microsoft.Azure.Search.ShingleTokenFilter",
-            "minShingleSize": 2,
-            "maxShingleSize": 3
-        },
-        {
-            "name": "customsstopwords",
-            "@odata.type": "#Microsoft.Azure.Search.StopwordsTokenFilter",
-            "stopwords": [
-                "ます",
-                "です",
-                "ただし",
-                "べき",
-                "ため",
-                "する",
-                "いう"
+            "name": "sg",
+            "searchMode": "analyzingInfixMatching",
+            "sourceFields": [
+                "keyPhrases"
             ]
         }
     ],
     "similarity": {
         "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
-        "k1": null,
-        "b": null
+        "k1": 1.2,
+        "b": 0.75
     }
 }

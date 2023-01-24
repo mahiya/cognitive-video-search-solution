@@ -1,0 +1,30 @@
+{
+    "dataSourceName": "{{DATASOURCE_NAME}}",
+    "skillsetName": "{{SKILLSET_NAME}}",
+    "targetIndexName": "{{INDEX_NAME}}",
+    "parameters": {
+        "configuration": {
+            "dataToExtract": "contentAndMetadata",
+            "parsingMode": "jsonArray"
+        }
+    },
+    "fieldMappings": [],
+    "outputFieldMappings": [
+        {
+            "sourceFieldName": "/document/keyphrases",
+            "targetFieldName": "keyPhrases"
+        },
+        {
+            "sourceFieldName": "/document/namedEntities/*",
+            "targetFieldName": "entities"
+        },
+        {
+            "sourceFieldName": "/document/sentiment",
+            "targetFieldName": "sentiment"
+        },
+        {
+            "sourceFieldName": "/document/confidenceScores",
+            "targetFieldName": "sentimentScores"
+        }
+    ]
+}

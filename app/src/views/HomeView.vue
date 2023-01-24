@@ -197,10 +197,10 @@ export default {
       const queryString = Object.keys(queryParameters)
         .map((key) => [key, queryParameters[key]].join("="))
         .join("&");
-      const url = `https://${this.settings.cognitiveSearchName}.search.windows.net/indexes/${this.settings.indexName}/docs/suggest?${queryString}`;
+      const url = `https://${this.settings.cognitiveSearchName}.search.windows.net/indexes/${this.settings.cognitiveSearchIndexName}/docs/suggest?${queryString}`;
       const headers = {
         "Content-Type": "application/json",
-        "api-key": this.settings.queryKey,
+        "api-key": this.settings.cognitiveSearchQueryKey,
       };
       const resp = await axios.get(url, { headers });
 
