@@ -1,0 +1,545 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            },
+            "videoIndexerResourceId": {
+                "defaultValue": "{{VIDEO_INDEXER_RESOURCE_ID}}",
+                "type": "String"
+            },
+            "videoIndexerAccountId": {
+                "defaultValue": "{{VIDEO_INDEXER_ACCOUNT_ID}}",
+                "type": "String"
+            },
+            "videoIndexerLocation": {
+                "defaultValue": "{{VIDEO_INDEXER_LOCATION}}",
+                "type": "String"
+            },
+            "cognitiveSearchName": {
+                "defaultValue": "{{COGNITIVE_SEARCH_NAME}}",
+                "type": "String"
+            },
+            "cognitiveSearchApiKey": {
+                "defaultValue": "{{COGNITIVE_API_KEY}}",
+                "type": "String"
+            },
+            "cognitiveSearchIndexerName": {
+                "defaultValue": "{{COGNITIVE_SEARCH_INDEXER_NAME}}",
+                "type": "String"
+            },
+            "cognitiveSearchDataSourceContainer": {
+                "defaultValue": "{{COGNITIVE_SEARCH_DATASOURCE_CONTAINER}}",
+                "type": "String"
+            }
+        },
+        "triggers": {
+            "{{LOGIC_APP_TRIGGER_NAME}}": {
+                "type": "Request",
+                "kind": "Http"
+            }
+        },
+        "actions": {
+            "Event_Grid_から送信されたJSONを解析": {
+                "type": "ParseJson",
+                "runAfter": {},
+                "inputs": {
+                    "content": "@triggerBody()",
+                    "schema": {
+                        "items": {
+                            "properties": {
+                                "subject": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "subject"
+                            ],
+                            "type": "object"
+                        },
+                        "type": "array"
+                    }
+                }
+            },
+            "Event_Grid_のイベント情報からアップロードされたContainer名を取得": {
+                "type": "InitializeVariable",
+                "runAfter": {
+                    "Event_Grid_から送信されたJSONを解析": [
+                        "Succeeded"
+                    ]
+                },
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "containerName",
+                            "type": "string",
+                            "value": "@split(body('Event_Grid_から送信されたJSONを解析')[0]['subject'], '/')[4]"
+                        }
+                    ]
+                }
+            },
+            "Event_Grid_のイベント情報からアップロードされたBlob名を取得": {
+                "type": "InitializeVariable",
+                "runAfter": {
+                    "Event_Grid_のイベント情報からアップロードされたContainer名を取得": [
+                        "Succeeded"
+                    ]
+                },
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "blobName",
+                            "type": "string",
+                            "value": "@split(body('Event_Grid_から送信されたJSONを解析')[0]['subject'], '/')[6]"
+                        }
+                    ]
+                }
+            },
+            "アップロードされたビデオファイルの共有アクセス署名付きURLを発行": {
+                "inputs": {
+                    "body": {
+                        "Permissions": "Read"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azureblob']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v2/datasets/@{encodeURIComponent('AccountNameFromSettings')}/CreateSharedLinkByPath",
+                    "queries": {
+                        "path": "@concat(variables('containerName'), '/', variables('blobName'))"
+                    }
+                },
+                "runAfter": {
+                    "Event_Grid_のイベント情報からアップロードされたBlob名を取得": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "Video_Indexer_のアカウントトークンを発行": {
+                "inputs": {
+                    "authentication": {
+                        "type": "ManagedServiceIdentity"
+                    },
+                    "body": {
+                        "PermissionType": "Contributor",
+                        "Scope": "Account"
+                    },
+                    "method": "POST",
+                    "uri": "@{concat('https://management.azure.com/', parameters('videoIndexerResourceId') ,'/generateAccessToken?api-version=2022-08-01')}"
+                },
+                "runAfter": {
+                    "アップロードされたビデオファイルの共有アクセス署名付きURLを発行": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Video_Indexer_のアカウントトークンを発行の結果(JSON)を解析": {
+                "inputs": {
+                    "content": "@body('Video_Indexer_のアカウントトークンを発行')",
+                    "schema": {
+                        "properties": {
+                            "accessToken": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Video_Indexer_のアカウントトークンを発行": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Video_Indexer_へビデオをアップロードしてインデックス作成を開始": {
+                "inputs": {
+                    "queries": {
+                        "name": "@variables('blobName')",
+                        "privacy": "private",
+                        "videoUrl": "@body('アップロードされたビデオファイルの共有アクセス署名付きURLを発行')?['WebUrl']",
+                        "language": "ja-JP"
+                    },
+                    "authentication": {
+                        "type": "Raw",
+                        "value": "@concat('Bearer ', body('Video_Indexer_のアカウントトークンを発行の結果(JSON)を解析')?['accessToken'])"
+                    },
+                    "method": "POST",
+                    "uri": "@{concat('https://api.videoindexer.ai/', parameters('videoIndexerLocation'), '/Accounts/', parameters('videoIndexerAccountId'), '/Videos')}"
+                },
+                "runAfter": {
+                    "Video_Indexer_のアカウントトークンを発行の結果(JSON)を解析": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Video_Indexer_のインデックス作成開始の結果(JSON)を解析": {
+                "inputs": {
+                    "content": "@body('Video_Indexer_へビデオをアップロードしてインデックス作成を開始')",
+                    "schema": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Video_Indexer_へビデオをアップロードしてインデックス作成を開始": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "Video_Indexer_のインデックス作成開始結果からビデオIDを取得": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "videoId",
+                            "type": "string",
+                            "value": "@body('Video_Indexer_のインデックス作成開始の結果(JSON)を解析')?['id']"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Video_Indexer_のインデックス作成開始の結果(JSON)を解析": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Video_Indexer_のインデックス作成処理が完了するまで待機": {
+                "actions": {
+                    "Video_Indexer_でのインデックス作成の状態を取得": {
+                        "inputs": {
+                            "authentication": {
+                                "type": "Raw",
+                                "value": "@concat('Bearer ', body('Video_Indexer_のアカウントトークンを発行の結果(JSON)を解析')?['accessToken'])"
+                            },
+                            "method": "GET",
+                            "uri": "@{concat('https://api.videoindexer.ai/', parameters('videoIndexerLocation'), '/Accounts/', parameters('videoIndexerAccountId'), '/Videos/', variables('videoId'), '/Index')}"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    },
+                    "Video_Indexer_のインデックス作成状態(JSON)を解析": {
+                        "inputs": {
+                            "content": "@body('Video_Indexer_でのインデックス作成の状態を取得')",
+                            "schema": {
+                                "properties": {
+                                    "state": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "runAfter": {
+                            "Video_Indexer_でのインデックス作成の状態を取得": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ParseJson"
+                    },
+                    "スイッチ": {
+                        "cases": {
+                            "ケース": {
+                                "actions": {
+                                    "待ち時間": {
+                                        "inputs": {
+                                            "interval": {
+                                                "count": 5,
+                                                "unit": "Second"
+                                            }
+                                        },
+                                        "runAfter": {},
+                                        "type": "Wait"
+                                    }
+                                },
+                                "case": "Processing"
+                            }
+                        },
+                        "default": {
+                            "actions": {}
+                        },
+                        "expression": "@body('Video_Indexer_のインデックス作成状態(JSON)を解析')?['state']",
+                        "runAfter": {
+                            "Video_Indexer_のインデックス作成状態(JSON)を解析": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Switch"
+                    }
+                },
+                "expression": "@not(equals(body('Video_Indexer_のインデックス作成状態(JSON)を解析')?['state'], 'Processing'))",
+                "limit": {
+                    "timeout": "PT1H"
+                },
+                "runAfter": {
+                    "Video_Indexer_のインデックス作成開始結果からビデオIDを取得": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Until"
+            },
+            "Video_Indexer_の分析処理が失敗した場合は処理を停止": {
+                "actions": {},
+                "else": {
+                    "actions": {
+                        "終了": {
+                            "inputs": {
+                                "runError": {
+                                    "message": "Video processing state is @{body('Video_Indexer_のインデックス作成状態(JSON)を解析')?['state']}."
+                                },
+                                "runStatus": "Failed"
+                            },
+                            "runAfter": {},
+                            "type": "Terminate"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@body('Video_Indexer_のインデックス作成状態(JSON)を解析')?['state']",
+                                "Processed"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Video_Indexer_のインデックス作成処理が完了するまで待機": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
+            },
+            "Video_Indexer_で作成されたインデックスを取得するためのURLを取得": {
+                "inputs": {
+                    "authentication": {
+                        "type": "Raw",
+                        "value": "@concat('Bearer ', body('Video_Indexer_のアカウントトークンを発行の結果(JSON)を解析')?['accessToken'])"
+                    },
+                    "method": "GET",
+                    "uri": "@{concat('https://api.videoindexer.ai/japaneast/Accounts/', parameters('videoIndexerAccountId') ,'/Videos/', variables('videoId') ,'/ArtifactUrl?type=Transcript')}"
+                },
+                "runAfter": {
+                    "Video_Indexer_の分析処理が失敗した場合は処理を停止": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Video_Indexer_で作成されたインデックスを取得": {
+                "inputs": {
+                    "method": "GET",
+                    "uri": "@{body('Video_Indexer_で作成されたインデックスを取得するためのURLを取得')}"
+                },
+                "runAfter": {
+                    "Video_Indexer_で作成されたインデックスを取得するためのURLを取得": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            },
+            "Video_Indexer_で作成されたインデックス(JSON)を解析": {
+                "inputs": {
+                    "content": "@body('Video_Indexer_で作成されたインデックスを取得')",
+                    "schema": {
+                        "properties": {
+                            "RecognizedPhrases": {
+                                "items": {
+                                    "properties": {
+                                        "NBest": {
+                                            "items": {
+                                                "properties": {
+                                                    "Confidence": {
+                                                        "type": "number"
+                                                    },
+                                                    "Display": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "Confidence",
+                                                    "Display"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "OffsetInTicks": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "NBest",
+                                        "OffsetInTicks"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "Video_Indexer_で作成されたインデックスを取得": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            },
+            "変数_\"phrases\"_を作成": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "phrases",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Video_Indexer_で作成されたインデックス(JSON)を解析": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "変数_\"index\"_を作成": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "index",
+                            "type": "integer",
+                            "value": 1
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "変数_\"phrases\"_を作成": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "データ_\"phrases\"_を作成": {
+                "inputs": "@variables('phrases')",
+                "runAfter": {
+                    "Video_Indexer_で作成されたインデックスから必要な情報のみを抽出": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Compose"
+            },
+            "Video_Indexer_で作成されたインデックス(必要な情報のみ)を_Blob_へ出力": {
+                "inputs": {
+                    "body": "@outputs('データ_\"phrases\"_を作成')",
+                    "headers": {
+                        "ReadFileMetadataFromServer": true
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azureblob']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/files",
+                    "queries": {
+                        "folderPath": "@parameters('cognitiveSearchDataSourceContainer')",
+                        "name": "@{concat(variables('videoId') ,'.json')}",
+                        "queryParametersSingleEncoded": true
+                    }
+                },
+                "runAfter": {
+                    "データ_\"phrases\"_を作成": [
+                        "Succeeded"
+                    ]
+                },
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                },
+                "type": "ApiConnection"
+            },
+            "Video_Indexer_で作成されたインデックスから必要な情報のみを抽出": {
+                "actions": {
+                    "変数の値を増やす": {
+                        "inputs": {
+                            "name": "index",
+                            "value": 1
+                        },
+                        "runAfter": {
+                            "配列変数に追加": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "IncrementVariable"
+                    },
+                    "配列変数に追加": {
+                        "inputs": {
+                            "name": "phrases",
+                            "value": {
+                                "blob": "@variables('blobName')",
+                                "index": "@variables('index')",
+                                "offset": "@div(items('Video_Indexer_で作成されたインデックスから必要な情報のみを抽出')?['OffsetInTicks'], 10000000)",
+                                "phrase": "@first(reverse(sort(items('Video_Indexer_で作成されたインデックスから必要な情報のみを抽出')?['NBest'], 'Confidence')))['Display']",
+                                "videoId": "@variables('videoId')"
+                            }
+                        },
+                        "runAfter": {},
+                        "type": "AppendToArrayVariable"
+                    }
+                },
+                "foreach": "@body('Video_Indexer_で作成されたインデックス(JSON)を解析')?['RecognizedPhrases']",
+                "runAfter": {
+                    "変数_\"index\"_を作成": [
+                        "Succeeded"
+                    ]
+                },
+                "runtimeConfiguration": {
+                    "concurrency": {
+                        "repetitions": 1
+                    }
+                },
+                "type": "Foreach"
+            },
+            "Cognitive_Search_のインデクサを実行": {
+                "inputs": {
+                    "headers": {
+                        "api-key": "@parameters('cognitiveSearchApiKey')"
+                    },
+                    "method": "POST",
+                    "uri": "@{concat('https://', parameters('cognitiveSearchName'),'.search.windows.net/indexers/', parameters('cognitiveSearchIndexerName'),'/run?api-version=2020-06-30')}"
+                },
+                "runAfter": {
+                    "Video_Indexer_で作成されたインデックス(必要な情報のみ)を_Blob_へ出力": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azureblob": {
+                    "connectionId": "{{LOGIC_APP_CONNECTION_RESOURCE_ID}}",
+                    "id": "/subscriptions/{{SUBSCRIPTION_ID}}/providers/Microsoft.Web/locations/{{REGION}}/managedApis/azureblob"
+                }
+            }
+        }
+    }
+}
