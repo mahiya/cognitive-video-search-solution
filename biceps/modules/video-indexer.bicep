@@ -136,5 +136,6 @@ resource videoIndexer 'Microsoft.VideoIndexer/accounts@2022-08-01' = {
 //// Outputs
 //////////////////////////////////////////////////////////////////////
 
+output videoIndexerResourceId string = videoIndexer.id
 output videoIndexerAccountId string = videoIndexer.properties.accountId
 output videoIndexerLocation string = videoIndexer.location

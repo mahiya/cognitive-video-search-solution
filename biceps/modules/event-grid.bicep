@@ -5,14 +5,22 @@
 // Parameters for Existing Resources
 param storageAccountName string
 param blobContainerName string
-param functionAppName string
-param functionName string
+param logicAppName string
 
 // Parameters for New Resources
 param location string = resourceGroup().location
 param systemTopicName string
 param eventSubscriptionName string
-param subjectEndsWith string = '.mp4'
+param logicAppTriggerName string
+param subjectEndsWith string
+
+//////////////////////////////////////////////////////////////////////
+//// References to Existing Resources
+//////////////////////////////////////////////////////////////////////
+
+resource logicApp 'Microsoft.Logic/workflows@2019-05-01' existing = {
+  name: logicAppName
+}
 
 //////////////////////////////////////////////////////////////////////
 //// Definitions of New Resources
@@ -34,17 +42,15 @@ resource eventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@
   name: eventSubscriptionName
   properties: {
     destination: {
-      endpointType: 'AzureFunction'
+      endpointType: 'WebHook'
       properties: {
         maxEventsPerBatch: 1
         preferredBatchSizeInKilobytes: 64
-        resourceId: resourceId('Microsoft.Web/sites/functions', functionAppName, functionName)
+        endpointUrl: listCallbackUrl('${resourceId('Microsoft.Logic/workflows/', logicApp.name)}/triggers/${logicAppTriggerName}', '2016-06-01').value
       }
     }
     filter: {
-      includedEventTypes: [
-        'Microsoft.Storage.BlobCreated'
-      ]
+      includedEventTypes: [ 'Microsoft.Storage.BlobCreated' ]
       subjectBeginsWith: '/blobServices/default/containers/${blobContainerName}'
       subjectEndsWith: subjectEndsWith
     }
