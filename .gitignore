@@ -5,17 +5,18 @@ obj
 Properties
 local.settings.json
 
-# Files related to HTML app
-cogsearch_settings.json
-
 # Files related to Azure Static Web Apps
 .env
 swa-cli.config.json
 staticwebapp.config.json
 
+# Files related to Azure Logic Apps
+logicapp/definition.json
+
 # Files related to Vue App
 app/node_modules
 app/dist
+cogsearch_settings.json
 
 # Files related to debug
 debug.sh

@@ -10,6 +10,7 @@
 - [.NET 6.0](https://dotnet.microsoft.com/ja-jp/download/dotnet/6.0)
 - [Azure Functions Core Tools ](https://learn.microsoft.com/ja-jp/azure/azure-functions/functions-run-local)
 - [Azure Static Web Apps CLI](https://github.com/Azure/static-web-apps-cli)
+- [npm](https://www.npmjs.com/)
 - bash が実行できるコンソール (Windows だと [Git Bash](https://gitforwindows.org/) など)
 
 ## デプロイ方法
@@ -26,12 +27,13 @@
 
 ## 使用する Azure サービス
 - Azure Functions
+- Azure Logic Apps
 - Azure Static Web Apps
 - Azure Cognitive Search
+- Azure Cognitive Service
 - Azure Video Indexer
 - Azure Media Services
 - Azure Event Grid
 - Azure Storage
-- Azure Key Vault
 - Azure Application Insights
 - Azure Active Directory
