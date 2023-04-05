@@ -28,7 +28,6 @@ namespace VideoSearchSolution
             var options = new DefaultAzureCredentialOptions();
             if (!string.IsNullOrEmpty(configuration.ManagedIdentityClientId))
                 options.ManagedIdentityClientId = configuration.ManagedIdentityClientId;
-            options.VisualStudioTenantId = "99fa25af-3b37-421e-8d50-feb3961d2dd6";
             var credential = new DefaultAzureCredential(options);
 
             // BlobSasGenerator
